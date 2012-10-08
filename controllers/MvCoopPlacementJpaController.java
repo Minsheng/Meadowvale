@@ -1,0 +1,228 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package meadowvale.controllers;
+
+import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.Query;
+import javax.persistence.EntityNotFoundException;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import meadowvale.controllers.exceptions.IllegalOrphanException;
+import meadowvale.controllers.exceptions.NonexistentEntityException;
+import meadowvale.entities.MvAddress;
+import meadowvale.entities.MvCoopPlacement;
+import meadowvale.entities.MvEmployment;
+import java.util.ArrayList;
+import java.util.Collection;
+
+/**
+ *
+ * @author Eric
+ */
+public class MvCoopPlacementJpaController extends AbstractController{
+
+    public MvCoopPlacementJpaController(EntityManagerFactory emfact) {
+        super(emfact);
+    }
+
+    public void create(MvCoopPlacement mvCoopPlacement) {
+        if (mvCoopPlacement.getMvEmploymentCollection() == null) {
+            mvCoopPlacement.setMvEmploymentCollection(new ArrayList<MvEmployment>());
+        }
+        EntityManager em = null;
+        try {
+            em = getEntityManager();
+            em.getTransaction().begin();
+            MvAddress addressId = mvCoopPlacement.getAddressId();
+            if (addressId != null) {
+                addressId = em.getReference(addressId.getClass(), addressId.getId());
+                mvCoopPlacement.setAddressId(addressId);
+            }
+            Collection<MvEmployment> attachedMvEmploymentCollection = new ArrayList<MvEmployment>();
+            for (MvEmployment mvEmploymentCollectionMvEmploymentToAttach : mvCoopPlacement.getMvEmploymentCollection()) {
+                mvEmploymentCollectionMvEmploymentToAttach = em.getReference(mvEmploymentCollectionMvEmploymentToAttach.getClass(), mvEmploymentCollectionMvEmploymentToAttach.getId());
+                attachedMvEmploymentCollection.add(mvEmploymentCollectionMvEmploymentToAttach);
+            }
+            mvCoopPlacement.setMvEmploymentCollection(attachedMvEmploymentCollection);
+            em.persist(mvCoopPlacement);
+            if (addressId != null) {
+                addressId.getMvCoopPlacementCollection().add(mvCoopPlacement);
+                addressId = em.merge(addressId);
+            }
+            for (MvEmployment mvEmploymentCollectionMvEmployment : mvCoopPlacement.getMvEmploymentCollection()) {
+                MvCoopPlacement oldPlacementIdOfMvEmploymentCollectionMvEmployment = mvEmploymentCollectionMvEmployment.getPlacementId();
+                mvEmploymentCollectionMvEmployment.setPlacementId(mvCoopPlacement);
+                mvEmploymentCollectionMvEmployment = em.merge(mvEmploymentCollectionMvEmployment);
+                if (oldPlacementIdOfMvEmploymentCollectionMvEmployment != null) {
+                    oldPlacementIdOfMvEmploymentCollectionMvEmployment.getMvEmploymentCollection().remove(mvEmploymentCollectionMvEmployment);
+                    oldPlacementIdOfMvEmploymentCollectionMvEmployment = em.merge(oldPlacementIdOfMvEmploymentCollectionMvEmployment);
+                }
+            }
+            em.getTransaction().commit();
+        } finally {
+            if (em != null) {
+                em.close();
+            }
+        }
+    }
+
+    public void edit(MvCoopPlacement mvCoopPlacement) throws IllegalOrphanException, NonexistentEntityException, Exception {
+        EntityManager em = null;
+        try {
+            em = getEntityManager();
+            em.getTransaction().begin();
+            MvCoopPlacement persistentMvCoopPlacement = em.find(MvCoopPlacement.class, mvCoopPlacement.getId());
+            MvAddress addressIdOld = persistentMvCoopPlacement.getAddressId();
+            MvAddress addressIdNew = mvCoopPlacement.getAddressId();
+            Collection<MvEmployment> mvEmploymentCollectionOld = persistentMvCoopPlacement.getMvEmploymentCollection();
+            Collection<MvEmployment> mvEmploymentCollectionNew = mvCoopPlacement.getMvEmploymentCollection();
+            List<String> illegalOrphanMessages = null;
+            for (MvEmployment mvEmploymentCollectionOldMvEmployment : mvEmploymentCollectionOld) {
+                if (!mvEmploymentCollectionNew.contains(mvEmploymentCollectionOldMvEmployment)) {
+                    if (illegalOrphanMessages == null) {
+                        illegalOrphanMessages = new ArrayList<String>();
+                    }
+                    illegalOrphanMessages.add("You must retain MvEmployment " + mvEmploymentCollectionOldMvEmployment + " since its placementId field is not nullable.");
+                }
+            }
+            if (illegalOrphanMessages != null) {
+                throw new IllegalOrphanException(illegalOrphanMessages);
+            }
+            if (addressIdNew != null) {
+                addressIdNew = em.getReference(addressIdNew.getClass(), addressIdNew.getId());
+                mvCoopPlacement.setAddressId(addressIdNew);
+            }
+            Collection<MvEmployment> attachedMvEmploymentCollectionNew = new ArrayList<MvEmployment>();
+            for (MvEmployment mvEmploymentCollectionNewMvEmploymentToAttach : mvEmploymentCollectionNew) {
+                mvEmploymentCollectionNewMvEmploymentToAttach = em.getReference(mvEmploymentCollectionNewMvEmploymentToAttach.getClass(), mvEmploymentCollectionNewMvEmploymentToAttach.getId());
+                attachedMvEmploymentCollectionNew.add(mvEmploymentCollectionNewMvEmploymentToAttach);
+            }
+            mvEmploymentCollectionNew = attachedMvEmploymentCollectionNew;
+            mvCoopPlacement.setMvEmploymentCollection(mvEmploymentCollectionNew);
+            mvCoopPlacement = em.merge(mvCoopPlacement);
+            if (addressIdOld != null && !addressIdOld.equals(addressIdNew)) {
+                addressIdOld.getMvCoopPlacementCollection().remove(mvCoopPlacement);
+                addressIdOld = em.merge(addressIdOld);
+            }
+            if (addressIdNew != null && !addressIdNew.equals(addressIdOld)) {
+                addressIdNew.getMvCoopPlacementCollection().add(mvCoopPlacement);
+                addressIdNew = em.merge(addressIdNew);
+            }
+            for (MvEmployment mvEmploymentCollectionNewMvEmployment : mvEmploymentCollectionNew) {
+                if (!mvEmploymentCollectionOld.contains(mvEmploymentCollectionNewMvEmployment)) {
+                    MvCoopPlacement oldPlacementIdOfMvEmploymentCollectionNewMvEmployment = mvEmploymentCollectionNewMvEmployment.getPlacementId();
+                    mvEmploymentCollectionNewMvEmployment.setPlacementId(mvCoopPlacement);
+                    mvEmploymentCollectionNewMvEmployment = em.merge(mvEmploymentCollectionNewMvEmployment);
+                    if (oldPlacementIdOfMvEmploymentCollectionNewMvEmployment != null && !oldPlacementIdOfMvEmploymentCollectionNewMvEmployment.equals(mvCoopPlacement)) {
+                        oldPlacementIdOfMvEmploymentCollectionNewMvEmployment.getMvEmploymentCollection().remove(mvEmploymentCollectionNewMvEmployment);
+                        oldPlacementIdOfMvEmploymentCollectionNewMvEmployment = em.merge(oldPlacementIdOfMvEmploymentCollectionNewMvEmployment);
+                    }
+                }
+            }
+            em.getTransaction().commit();
+        } catch (Exception ex) {
+            String msg = ex.getLocalizedMessage();
+            if (msg == null || msg.length() == 0) {
+                Integer id = mvCoopPlacement.getId();
+                if (findMvCoopPlacement(id) == null) {
+                    throw new NonexistentEntityException("The mvCoopPlacement with id " + id + " no longer exists.");
+                }
+            }
+            throw ex;
+        } finally {
+            if (em != null) {
+                em.close();
+            }
+        }
+    }
+
+    public void destroy(Integer id) throws IllegalOrphanException, NonexistentEntityException {
+        EntityManager em = null;
+        try {
+            em = getEntityManager();
+            em.getTransaction().begin();
+            MvCoopPlacement mvCoopPlacement;
+            try {
+                mvCoopPlacement = em.getReference(MvCoopPlacement.class, id);
+                mvCoopPlacement.getId();
+            } catch (EntityNotFoundException enfe) {
+                throw new NonexistentEntityException("The mvCoopPlacement with id " + id + " no longer exists.", enfe);
+            }
+            List<String> illegalOrphanMessages = null;
+            Collection<MvEmployment> mvEmploymentCollectionOrphanCheck = mvCoopPlacement.getMvEmploymentCollection();
+            for (MvEmployment mvEmploymentCollectionOrphanCheckMvEmployment : mvEmploymentCollectionOrphanCheck) {
+                if (illegalOrphanMessages == null) {
+                    illegalOrphanMessages = new ArrayList<String>();
+                }
+                illegalOrphanMessages.add("This MvCoopPlacement (" + mvCoopPlacement + ") cannot be destroyed since the MvEmployment " + mvEmploymentCollectionOrphanCheckMvEmployment + " in its mvEmploymentCollection field has a non-nullable placementId field.");
+            }
+            if (illegalOrphanMessages != null) {
+                throw new IllegalOrphanException(illegalOrphanMessages);
+            }
+            MvAddress addressId = mvCoopPlacement.getAddressId();
+            if (addressId != null) {
+                addressId.getMvCoopPlacementCollection().remove(mvCoopPlacement);
+                addressId = em.merge(addressId);
+            }
+            em.remove(mvCoopPlacement);
+            em.getTransaction().commit();
+        } finally {
+            if (em != null) {
+                em.close();
+            }
+        }
+    }
+
+    public List<MvCoopPlacement> findMvCoopPlacementEntities() {
+        return findMvCoopPlacementEntities(true, -1, -1);
+    }
+
+    public List<MvCoopPlacement> findMvCoopPlacementEntities(int maxResults, int firstResult) {
+        return findMvCoopPlacementEntities(false, maxResults, firstResult);
+    }
+
+    private List<MvCoopPlacement> findMvCoopPlacementEntities(boolean all, int maxResults, int firstResult) {
+        EntityManager em = getEntityManager();
+        try {
+            CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
+            cq.select(cq.from(MvCoopPlacement.class));
+            Query q = em.createQuery(cq);
+            if (!all) {
+                q.setMaxResults(maxResults);
+                q.setFirstResult(firstResult);
+            }
+            return q.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    public MvCoopPlacement findMvCoopPlacement(Integer id) {
+        EntityManager em = getEntityManager();
+        try {
+            return em.find(MvCoopPlacement.class, id);
+        } finally {
+            em.close();
+        }
+    }
+
+    public int getMvCoopPlacementCount() {
+        EntityManager em = getEntityManager();
+        try {
+            CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
+            Root<MvCoopPlacement> rt = cq.from(MvCoopPlacement.class);
+            cq.select(em.getCriteriaBuilder().count(rt));
+            Query q = em.createQuery(cq);
+            return ((Long) q.getSingleResult()).intValue();
+        } finally {
+            em.close();
+        }
+    }
+
+}

@@ -1,0 +1,258 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package meadowvale.controllers;
+
+import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.Query;
+import javax.persistence.EntityNotFoundException;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import meadowvale.controllers.exceptions.IllegalOrphanException;
+import meadowvale.controllers.exceptions.NonexistentEntityException;
+import meadowvale.entities.MvClass;
+import meadowvale.entities.MvWeek;
+import java.util.ArrayList;
+import java.util.Collection;
+import meadowvale.entities.MvEnrollment;
+
+/**
+ *
+ * @author Eric
+ */
+public class MvClassJpaController {
+
+    public MvClassJpaController() {
+        emf = Persistence.createEntityManagerFactory("MeadowvalePU");
+    }
+    private EntityManagerFactory emf = null;
+
+    public EntityManager getEntityManager() {
+        return emf.createEntityManager();
+    }
+
+    public void create(MvClass mvClass) {
+        if (mvClass.getMvWeekCollection() == null) {
+            mvClass.setMvWeekCollection(new ArrayList<MvWeek>());
+        }
+        if (mvClass.getMvEnrollmentCollection() == null) {
+            mvClass.setMvEnrollmentCollection(new ArrayList<MvEnrollment>());
+        }
+        EntityManager em = null;
+        try {
+            em = getEntityManager();
+            em.getTransaction().begin();
+            Collection<MvWeek> attachedMvWeekCollection = new ArrayList<MvWeek>();
+            for (MvWeek mvWeekCollectionMvWeekToAttach : mvClass.getMvWeekCollection()) {
+                mvWeekCollectionMvWeekToAttach = em.getReference(mvWeekCollectionMvWeekToAttach.getClass(), mvWeekCollectionMvWeekToAttach.getId());
+                attachedMvWeekCollection.add(mvWeekCollectionMvWeekToAttach);
+            }
+            mvClass.setMvWeekCollection(attachedMvWeekCollection);
+            Collection<MvEnrollment> attachedMvEnrollmentCollection = new ArrayList<MvEnrollment>();
+            for (MvEnrollment mvEnrollmentCollectionMvEnrollmentToAttach : mvClass.getMvEnrollmentCollection()) {
+                mvEnrollmentCollectionMvEnrollmentToAttach = em.getReference(mvEnrollmentCollectionMvEnrollmentToAttach.getClass(), mvEnrollmentCollectionMvEnrollmentToAttach.getId());
+                attachedMvEnrollmentCollection.add(mvEnrollmentCollectionMvEnrollmentToAttach);
+            }
+            mvClass.setMvEnrollmentCollection(attachedMvEnrollmentCollection);
+            em.persist(mvClass);
+            for (MvWeek mvWeekCollectionMvWeek : mvClass.getMvWeekCollection()) {
+                MvClass oldClassIdOfMvWeekCollectionMvWeek = mvWeekCollectionMvWeek.getClassId();
+                mvWeekCollectionMvWeek.setClassId(mvClass);
+                mvWeekCollectionMvWeek = em.merge(mvWeekCollectionMvWeek);
+                if (oldClassIdOfMvWeekCollectionMvWeek != null) {
+                    oldClassIdOfMvWeekCollectionMvWeek.getMvWeekCollection().remove(mvWeekCollectionMvWeek);
+                    oldClassIdOfMvWeekCollectionMvWeek = em.merge(oldClassIdOfMvWeekCollectionMvWeek);
+                }
+            }
+            for (MvEnrollment mvEnrollmentCollectionMvEnrollment : mvClass.getMvEnrollmentCollection()) {
+                MvClass oldClassIdOfMvEnrollmentCollectionMvEnrollment = mvEnrollmentCollectionMvEnrollment.getClassId();
+                mvEnrollmentCollectionMvEnrollment.setClassId(mvClass);
+                mvEnrollmentCollectionMvEnrollment = em.merge(mvEnrollmentCollectionMvEnrollment);
+                if (oldClassIdOfMvEnrollmentCollectionMvEnrollment != null) {
+                    oldClassIdOfMvEnrollmentCollectionMvEnrollment.getMvEnrollmentCollection().remove(mvEnrollmentCollectionMvEnrollment);
+                    oldClassIdOfMvEnrollmentCollectionMvEnrollment = em.merge(oldClassIdOfMvEnrollmentCollectionMvEnrollment);
+                }
+            }
+            em.getTransaction().commit();
+        } finally {
+            if (em != null) {
+                em.close();
+            }
+        }
+    }
+
+    public void edit(MvClass mvClass) throws IllegalOrphanException, NonexistentEntityException, Exception {
+        EntityManager em = null;
+        try {
+            em = getEntityManager();
+            em.getTransaction().begin();
+            MvClass persistentMvClass = em.find(MvClass.class, mvClass.getId());
+            Collection<MvWeek> mvWeekCollectionOld = persistentMvClass.getMvWeekCollection();
+            Collection<MvWeek> mvWeekCollectionNew = mvClass.getMvWeekCollection();
+            Collection<MvEnrollment> mvEnrollmentCollectionOld = persistentMvClass.getMvEnrollmentCollection();
+            Collection<MvEnrollment> mvEnrollmentCollectionNew = mvClass.getMvEnrollmentCollection();
+            List<String> illegalOrphanMessages = null;
+            for (MvWeek mvWeekCollectionOldMvWeek : mvWeekCollectionOld) {
+                if (!mvWeekCollectionNew.contains(mvWeekCollectionOldMvWeek)) {
+                    if (illegalOrphanMessages == null) {
+                        illegalOrphanMessages = new ArrayList<String>();
+                    }
+                    illegalOrphanMessages.add("You must retain MvWeek " + mvWeekCollectionOldMvWeek + " since its classId field is not nullable.");
+                }
+            }
+            for (MvEnrollment mvEnrollmentCollectionOldMvEnrollment : mvEnrollmentCollectionOld) {
+                if (!mvEnrollmentCollectionNew.contains(mvEnrollmentCollectionOldMvEnrollment)) {
+                    if (illegalOrphanMessages == null) {
+                        illegalOrphanMessages = new ArrayList<String>();
+                    }
+                    illegalOrphanMessages.add("You must retain MvEnrollment " + mvEnrollmentCollectionOldMvEnrollment + " since its classId field is not nullable.");
+                }
+            }
+            if (illegalOrphanMessages != null) {
+                throw new IllegalOrphanException(illegalOrphanMessages);
+            }
+            Collection<MvWeek> attachedMvWeekCollectionNew = new ArrayList<MvWeek>();
+            for (MvWeek mvWeekCollectionNewMvWeekToAttach : mvWeekCollectionNew) {
+                mvWeekCollectionNewMvWeekToAttach = em.getReference(mvWeekCollectionNewMvWeekToAttach.getClass(), mvWeekCollectionNewMvWeekToAttach.getId());
+                attachedMvWeekCollectionNew.add(mvWeekCollectionNewMvWeekToAttach);
+            }
+            mvWeekCollectionNew = attachedMvWeekCollectionNew;
+            mvClass.setMvWeekCollection(mvWeekCollectionNew);
+            Collection<MvEnrollment> attachedMvEnrollmentCollectionNew = new ArrayList<MvEnrollment>();
+            for (MvEnrollment mvEnrollmentCollectionNewMvEnrollmentToAttach : mvEnrollmentCollectionNew) {
+                mvEnrollmentCollectionNewMvEnrollmentToAttach = em.getReference(mvEnrollmentCollectionNewMvEnrollmentToAttach.getClass(), mvEnrollmentCollectionNewMvEnrollmentToAttach.getId());
+                attachedMvEnrollmentCollectionNew.add(mvEnrollmentCollectionNewMvEnrollmentToAttach);
+            }
+            mvEnrollmentCollectionNew = attachedMvEnrollmentCollectionNew;
+            mvClass.setMvEnrollmentCollection(mvEnrollmentCollectionNew);
+            mvClass = em.merge(mvClass);
+            for (MvWeek mvWeekCollectionNewMvWeek : mvWeekCollectionNew) {
+                if (!mvWeekCollectionOld.contains(mvWeekCollectionNewMvWeek)) {
+                    MvClass oldClassIdOfMvWeekCollectionNewMvWeek = mvWeekCollectionNewMvWeek.getClassId();
+                    mvWeekCollectionNewMvWeek.setClassId(mvClass);
+                    mvWeekCollectionNewMvWeek = em.merge(mvWeekCollectionNewMvWeek);
+                    if (oldClassIdOfMvWeekCollectionNewMvWeek != null && !oldClassIdOfMvWeekCollectionNewMvWeek.equals(mvClass)) {
+                        oldClassIdOfMvWeekCollectionNewMvWeek.getMvWeekCollection().remove(mvWeekCollectionNewMvWeek);
+                        oldClassIdOfMvWeekCollectionNewMvWeek = em.merge(oldClassIdOfMvWeekCollectionNewMvWeek);
+                    }
+                }
+            }
+            for (MvEnrollment mvEnrollmentCollectionNewMvEnrollment : mvEnrollmentCollectionNew) {
+                if (!mvEnrollmentCollectionOld.contains(mvEnrollmentCollectionNewMvEnrollment)) {
+                    MvClass oldClassIdOfMvEnrollmentCollectionNewMvEnrollment = mvEnrollmentCollectionNewMvEnrollment.getClassId();
+                    mvEnrollmentCollectionNewMvEnrollment.setClassId(mvClass);
+                    mvEnrollmentCollectionNewMvEnrollment = em.merge(mvEnrollmentCollectionNewMvEnrollment);
+                    if (oldClassIdOfMvEnrollmentCollectionNewMvEnrollment != null && !oldClassIdOfMvEnrollmentCollectionNewMvEnrollment.equals(mvClass)) {
+                        oldClassIdOfMvEnrollmentCollectionNewMvEnrollment.getMvEnrollmentCollection().remove(mvEnrollmentCollectionNewMvEnrollment);
+                        oldClassIdOfMvEnrollmentCollectionNewMvEnrollment = em.merge(oldClassIdOfMvEnrollmentCollectionNewMvEnrollment);
+                    }
+                }
+            }
+            em.getTransaction().commit();
+        } catch (Exception ex) {
+            String msg = ex.getLocalizedMessage();
+            if (msg == null || msg.length() == 0) {
+                Integer id = mvClass.getId();
+                if (findMvClass(id) == null) {
+                    throw new NonexistentEntityException("The mvClass with id " + id + " no longer exists.");
+                }
+            }
+            throw ex;
+        } finally {
+            if (em != null) {
+                em.close();
+            }
+        }
+    }
+
+    public void destroy(Integer id) throws IllegalOrphanException, NonexistentEntityException {
+        EntityManager em = null;
+        try {
+            em = getEntityManager();
+            em.getTransaction().begin();
+            MvClass mvClass;
+            try {
+                mvClass = em.getReference(MvClass.class, id);
+                mvClass.getId();
+            } catch (EntityNotFoundException enfe) {
+                throw new NonexistentEntityException("The mvClass with id " + id + " no longer exists.", enfe);
+            }
+            List<String> illegalOrphanMessages = null;
+            Collection<MvWeek> mvWeekCollectionOrphanCheck = mvClass.getMvWeekCollection();
+            for (MvWeek mvWeekCollectionOrphanCheckMvWeek : mvWeekCollectionOrphanCheck) {
+                if (illegalOrphanMessages == null) {
+                    illegalOrphanMessages = new ArrayList<String>();
+                }
+                illegalOrphanMessages.add("This MvClass (" + mvClass + ") cannot be destroyed since the MvWeek " + mvWeekCollectionOrphanCheckMvWeek + " in its mvWeekCollection field has a non-nullable classId field.");
+            }
+            Collection<MvEnrollment> mvEnrollmentCollectionOrphanCheck = mvClass.getMvEnrollmentCollection();
+            for (MvEnrollment mvEnrollmentCollectionOrphanCheckMvEnrollment : mvEnrollmentCollectionOrphanCheck) {
+                if (illegalOrphanMessages == null) {
+                    illegalOrphanMessages = new ArrayList<String>();
+                }
+                illegalOrphanMessages.add("This MvClass (" + mvClass + ") cannot be destroyed since the MvEnrollment " + mvEnrollmentCollectionOrphanCheckMvEnrollment + " in its mvEnrollmentCollection field has a non-nullable classId field.");
+            }
+            if (illegalOrphanMessages != null) {
+                throw new IllegalOrphanException(illegalOrphanMessages);
+            }
+            em.remove(mvClass);
+            em.getTransaction().commit();
+        } finally {
+            if (em != null) {
+                em.close();
+            }
+        }
+    }
+
+    public List<MvClass> findMvClassEntities() {
+        return findMvClassEntities(true, -1, -1);
+    }
+
+    public List<MvClass> findMvClassEntities(int maxResults, int firstResult) {
+        return findMvClassEntities(false, maxResults, firstResult);
+    }
+
+    private List<MvClass> findMvClassEntities(boolean all, int maxResults, int firstResult) {
+        EntityManager em = getEntityManager();
+        try {
+            CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
+            cq.select(cq.from(MvClass.class));
+            Query q = em.createQuery(cq);
+            if (!all) {
+                q.setMaxResults(maxResults);
+                q.setFirstResult(firstResult);
+            }
+            return q.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    public MvClass findMvClass(Integer id) {
+        EntityManager em = getEntityManager();
+        try {
+            return em.find(MvClass.class, id);
+        } finally {
+            em.close();
+        }
+    }
+
+    public int getMvClassCount() {
+        EntityManager em = getEntityManager();
+        try {
+            CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
+            Root<MvClass> rt = cq.from(MvClass.class);
+            cq.select(em.getCriteriaBuilder().count(rt));
+            Query q = em.createQuery(cq);
+            return ((Long) q.getSingleResult()).intValue();
+        } finally {
+            em.close();
+        }
+    }
+
+}

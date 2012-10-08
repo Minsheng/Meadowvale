@@ -1,0 +1,145 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package meadowvale;
+import java.util.Date;
+import meadowvale.entities.*;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.Query;
+import meadowvale.controllers.*;
+import org.eclipse.persistence.config.PersistenceUnitProperties;
+
+
+/**
+ *
+ * @author Vance
+ */
+public class Application {
+    public final String TITLE = "Meadowvale";
+    private EntityManagerFactory emf = null;
+
+    public MvAddressJpaController MvAddressController;
+    public MvClassJpaController MvClassController;
+    public MvCoopPlacementJpaController MvCoopPlacementController;
+    public MvEmploymentJpaController MvEmploymentController;
+    public MvEnrollmentJpaController MvEnrollmentController;
+    public MvPersonJpaController MvPersonController;
+    public MvPersonGroupJpaController MvPersonGroupController;
+    public MvUserJpaController MvUserController;
+    public MvWeekJpaController MvWeekController;
+    public MvWeeklyLogJpaController MvWeeklyLogController;
+    public MvCoopJpaController MvCoopController;
+    public MvContactJpaController MvContactController;
+
+    public String loginType;
+    public MvUser user;
+    public boolean loggedin = false;
+
+    public Application(){
+        initControllers();
+        emf = Persistence.createEntityManagerFactory("MeadowvalePU");
+        EntityManager em = emf.createEntityManager();
+        em.close();   // Temp em used to initiate connection with the databse.
+    }
+
+    public void initControllers(){
+        MvAddressController = new MvAddressJpaController();
+        MvClassController = new MvClassJpaController();
+        MvCoopPlacementController = new MvCoopPlacementJpaController();
+        MvEmploymentController = new MvEmploymentJpaController();
+        MvEnrollmentController = new MvEnrollmentJpaController();
+        MvPersonController = new MvPersonJpaController();
+        MvPersonGroupController = new MvPersonGroupJpaController();
+        MvUserController = new MvUserJpaController();
+        MvWeekController = new MvWeekJpaController();
+        MvWeeklyLogController = new MvWeeklyLogJpaController();
+        MvCoopController = new MvCoopJpaController();
+        MvContactController = new MvContactJpaController();
+    }
+    
+    /**
+     *
+     * @param entityClass e.g. MvUser.class
+     * @param field the field name should be in camelCase with first letter
+     *        lower cased
+     * @param value
+     * @return
+     */
+    public List selectEntitiesBy(Class entityClass, String predicate){
+
+        EntityManager em = emf.createEntityManager();
+
+        String selectQuery = "select * from " +
+                             this.camelToLower(entityClass.getSimpleName());
+
+        /* append the WHERE clause */
+        if (predicate != null){
+            selectQuery += " where " + predicate + ";";
+        }
+
+        /* create the query for the specified entityClass */
+        Query q = em.createNativeQuery(selectQuery, entityClass);
+
+        /* retrieve the results as a list */
+        List resultList = q.getResultList();
+
+        em.close();
+
+        return resultList;
+        
+    }
+    public int authentication(String username, char[] password){
+
+        /* get MvUser object that corresponds to rows in mv_user table */
+        String predicate = "user_name ='" + username + "'";
+        List<MvUser> rl = this.selectEntitiesBy(MvUser.class, predicate);
+
+        String pass = new String(password);
+
+        if(rl.isEmpty()){   // invalid Username or Password
+            return 0;
+        } else if (rl.size() > 1) { // should never occur due to the UNIQUE
+            return 0;               // key on the username field
+        }else{   // correct row returned
+            MvUser mv_user = rl.get(0);
+            if (mv_user.getActive() == false){
+                return -1;
+            } else {
+                if (mv_user.getUserPassword().equals(pass)){
+                    this.user = mv_user;
+                    MvPerson person = mv_user.getMvPersonId();
+                    MvPersonGroup pg = person.getPersonGroupId();
+                    this.loginType = pg.getTypeName();
+                    return pg.getId();
+                }
+                return 0;
+            }
+        }
+    }
+
+    public String camelToLower(String camel){
+        Pattern p = Pattern.compile("([a-z]*+)([A-Z][a-z]*+)");
+        Matcher m = p.matcher(camel);
+        String result = "";
+        while (m.find()){
+            result += m.group(1);
+            result += "_"+m.group(2).toLowerCase();
+        }
+        if (result.startsWith("_")){
+            result = result.substring(1);
+        }
+        return result;
+    }
+    
+    public static void main(String[] args){
+       
+    }
+}

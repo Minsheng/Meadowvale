@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities
+END
+MvUser.java
+K 25
+svn:wc:ra_dav:version-url
+V 116
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvUser.java
+END
+MvEnrollment.java
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvEnrollment.java
+END
+MvCoop.java
+K 25
+svn:wc:ra_dav:version-url
+V 116
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvCoop.java
+END
+MvWeeklyLog.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvWeeklyLog.java
+END
+MvPersonGroup.java
+K 25
+svn:wc:ra_dav:version-url
+V 123
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvPersonGroup.java
+END
+MvAddress.java
+K 25
+svn:wc:ra_dav:version-url
+V 119
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvAddress.java
+END
+MvClass.java
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvClass.java
+END
+MvPerson.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvPerson.java
+END
+MvCoopPlacement.java
+K 25
+svn:wc:ra_dav:version-url
+V 125
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvCoopPlacement.java
+END
+MvEmployment.java
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvEmployment.java
+END
+MvContact.java
+K 25
+svn:wc:ra_dav:version-url
+V 119
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvContact.java
+END
+MvWeek.java
+K 25
+svn:wc:ra_dav:version-url
+V 116
+/svn/csc301-2010-01/Sierra/!svn/ver/75/a4/Meadowvale%20Source%20Files/Meadowvale/src/meadowvale/entities/MvWeek.java
+END

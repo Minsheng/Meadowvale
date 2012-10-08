@@ -1,0 +1,233 @@
+DROP DATABASE IF EXISTS meadowvale;
+CREATE DATABASE meadowvale;
+USE meadowvale;
+DROP TABLE IF EXISTS mv_address;
+CREATE TABLE mv_address(
+	id INT NOT NULL AUTO_INCREMENT,
+	address_line_1 VARCHAR(256) NOT NULL,
+	address_line_2 VARCHAR(256),
+	city VARCHAR(32) NOT NULL,
+	province VARCHAR(32) NOT NULL,
+	country VARCHAR(32) NOT NULL,
+	postal_code VARCHAR(32) NOT NULL,
+	PRIMARY KEY (id)
+);
+DROP TABLE IF EXISTS mv_person_group;
+CREATE TABLE mv_person_group (
+	id INT NOT NULL AUTO_INCREMENT,
+	type_name VARCHAR(32) NOT NULL,
+	PRIMARY KEY (id)
+);
+
+DROP TABLE IF EXISTS mv_person;
+CREATE TABLE mv_person(
+	id INT NOT NULL AUTO_INCREMENT,
+	first_name VARCHAR(100) NOT NULL,
+	last_name VARCHAR(100) NOT NULL,
+  date_birth DATE NOT NULL,
+	email VARCHAR(100) NOT NULL,
+	home_phone INT,
+	mobile_phone INT,
+	address_id INT NOT NULL,
+	person_group_id INT NOT NULL,
+	PRIMARY KEY (id),
+	FOREIGN KEY (address_id) REFERENCES mv_address (id),
+	FOREIGN KEY (person_group_id) REFERENCES mv_person_group (id)
+);
+
+DROP TABLE IF EXISTS mv_user;
+CREATE TABLE mv_user(
+	id INT NOT NULL AUTO_INCREMENT,
+	user_name VARCHAR(32) UNIQUE NOT NULL,
+	user_password VARCHAR(32) NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  date_created DATE NOT NULL,
+	mv_person_id INT NOT NULL,
+	PRIMARY KEY (id),
+	FOREIGN KEY (mv_person_id) REFERENCES mv_person(id)
+);
+
+
+DROP TABLE IF EXISTS mv_coop;
+CREATE TABLE mv_coop(
+	id INT NOT NULL AUTO_INCREMENT,
+  year_number VARCHAR(5) NOT NULL,
+  business VARCHAR(50) NOT NULL,
+  location VARCHAR(50) NOT NULL,
+  activity VARCHAR(500) NOT NULL,
+  contact VARCHAR(50) NOT NULL,
+  phone VARCHAR(50) NOT NULL,
+	PRIMARY KEY (id)
+);
+
+DROP TABLE IF EXISTS mv_contact;
+CREATE TABLE mv_contact(
+	id INT NOT NULL AUTO_INCREMENT,
+  year_number VARCHAR(5) NOT NULL,
+  contact VARCHAR(50) NOT NULL,
+  phone VARCHAR(50) NOT NULL,
+  alter_contact VARCHAR(50) NOT NULL,
+  company VARCHAR(50) NOT NULL,
+  topic VARCHAR(50) NOT NULL,
+  comments VARCHAR(50) NOT NULL,
+	PRIMARY KEY (id)
+);
+
+DROP TABLE IF EXISTS mv_class;
+CREATE TABLE mv_class(
+	id INT NOT NULL AUTO_INCREMENT,
+	class_number INT NOT NULL,
+	term VARCHAR(32) NOT NULL,
+  class_name VARCHAR(50) NOT NULL,
+  required_coop_hours INT NOT NULL,
+	PRIMARY KEY (id)
+);
+
+DROP TABLE IF EXISTS mv_week;
+CREATE TABLE mv_week(
+    id INT NOT NULL AUTO_INCREMENT,
+    first_day DATE NOT NULL,
+    last_day DATE NOT NULL,
+    class_id INT NOT NULL,
+    week_number INT NOT NULL,
+    due_date DATE NOT NULL,
+    mon VARCHAR(50),
+    tue VARCHAR(50),
+    wed VARCHAR(50),
+    thu VARCHAR(50),
+    fri VARCHAR(50),
+    sat VARCHAR(50),
+    PRIMARY KEY (id),
+    FOREIGN KEY (class_id) REFERENCES mv_class (id)
+);
+
+
+DROP TABLE IF EXISTS mv_enrollment;
+CREATE TABLE mv_enrollment(
+	id INT NOT NULL AUTO_INCREMENT,
+	student_id INT NOT NULL,
+	class_id INT NOT NULL,
+  unique_coop_hour INT NOT NULL,
+	PRIMARY KEY (id),
+	FOREIGN KEY (class_id) REFERENCES mv_class (id),
+	FOREIGN KEY (student_id) REFERENCES mv_person (id)
+);
+
+
+
+DROP TABLE IF EXISTS mv_weekly_log;
+CREATE TABLE mv_weekly_log(
+	id INT NOT NULL AUTO_INCREMENT,
+	mv_student_id INT NOT NULL,
+	date_submitted DATE,
+	date_created DATE NOT NULL,
+	approved_id INT,
+  disapproved_id INT,
+  week_id INT NOT NULL,
+  mark FLOAT,
+  total_mins INT NOT NULL DEFAULT 0,
+  total_ic INT NOT NULL DEFAULT 0,
+  absent_days INT NOT NULL,
+  absent_reason VARCHAR(100) NOT NULL,
+  monInHrs INT,
+  monInMins INT,
+  monOutHrs INT,
+  monOutMins INT,
+  tueInHrs INT,
+  tueInMins INT,
+  tueOutHrs INT,
+  tueOutMins INT,
+  wedInHrs INT,
+  wedInMins INT,
+  wedOutHrs INT,
+  wedOutMins INT,
+  thuInHrs INT,
+  thuInMins INT,
+  thuOutHrs INT,
+  thuOutMins INT,
+  friInHrs INT,
+  friInMins INT,
+  friOutHrs INT,
+  friOutMins INT,
+  satInHrs INT,
+  satInMins INT,
+  satOutHrs INT,
+  satOutMins INT,
+  act1 VARCHAR(50),
+  act2 VARCHAR(50),
+  act3 VARCHAR(50),
+  act4 VARCHAR(50),
+  act5 VARCHAR(50),
+  act6 VARCHAR(50),
+  act7 VARCHAR(50),
+  act8 VARCHAR(50),
+  act9 VARCHAR(50),
+  act10 VARCHAR(50),
+  act11 VARCHAR(50),
+  act12 VARCHAR(50),
+  act13 VARCHAR(50),
+  act14 VARCHAR(50),
+  act15 VARCHAR(50),
+  act16 VARCHAR(50),
+  act17 VARCHAR(50),
+  act18 VARCHAR(50),
+  act1t VARCHAR(5),
+  act2t VARCHAR(5),
+  act3t VARCHAR(5),
+  act4t VARCHAR(5),
+  act5t VARCHAR(5),
+  act6t VARCHAR(5),
+  act7t VARCHAR(5),
+  act8t VARCHAR(5),
+  act9t VARCHAR(5),
+  act10t VARCHAR(5),
+  act11t VARCHAR(5),
+  act12t VARCHAR(5),
+  act13t VARCHAR(5),
+  act14t VARCHAR(5),
+  act15t VARCHAR(5),
+  act16t VARCHAR(5),
+  act17t VARCHAR(5),
+  act18t VARCHAR(5),
+	-- fields for additional form information go under here
+	PRIMARY KEY (id),
+	FOREIGN KEY (mv_student_id) REFERENCES mv_user (id),
+        FOREIGN KEY (week_id) REFERENCES mv_week (id),
+  FOREIGN KEY (disapproved_id) REFERENCES mv_user (id),
+	FOREIGN KEY (approved_id) REFERENCES mv_user (id)
+);
+
+
+DROP TABLE IF EXISTS mv_coop_placement;
+CREATE TABLE mv_coop_placement(
+	id INT NOT NULL AUTO_INCREMENT,
+	name VARCHAR(100) NOT NULL,
+	address_id INT,
+	category VARCHAR(100) NOT NULL,
+	contact_id INT NOT NULL,
+	PRIMARY KEY (id),
+	FOREIGN KEY (address_id) REFERENCES mv_address (id)
+);
+
+DROP TABLE IF EXISTS mv_employment;
+CREATE TABLE mv_employment(
+	id INT NOT NULL AUTO_INCREMENT,
+	student_id INT NOT NULL,
+	placement_id INT NOT NULL,
+	PRIMARY KEY (id),
+	FOREIGN KEY (placement_id) REFERENCES mv_coop_placement (id),
+	FOREIGN KEY (student_id) REFERENCES mv_person (id)
+);
+
+INSERT INTO mv_address (id,address_line_1, address_line_2, city, province, country, postal_code) values (1,"default",null,"defautl","default","default","default");
+INSERT INTO mv_person_group (id, type_name) values (1, "default");
+INSERT INTO mv_person_group (id, type_name) values (2, "student");
+INSERT INTO mv_person_group (id, type_name) values (3, "instructor");
+INSERT INTO mv_person (id,first_name, last_name, date_birth, email, home_phone, mobile_phone,address_id,person_group_id) values (1,"default","default",'11111111',"default",null,null,1,1);
+
+
+-- The following query is for development purposes, and should be removed in
+-- production environment.
+
+INSERT INTO mv_person (id,first_name, last_name, date_birth, email, home_phone, mobile_phone,address_id,person_group_id) values (2,"Clarence","Veld",'20100224',"abc@cdf.com",null,null,1,3);
+INSERT INTO mv_user (id, user_name,user_password,active,date_created,mv_person_id) values (1, "veldcl", "jjjjjj",1,'2010-02-24',2);
