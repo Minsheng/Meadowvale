@@ -1,0 +1,187 @@
+Due to the fact that our application is entirely GUI based, it was not feasible for us to
+employ GUI unit test harnesses to test our application.
+
+However, we do take the correctness of our application very seriously and we have developed
+rigorous tests to verify the correctness of our application. We provide our tests as the
+following instructions that you can follow to manually verify that our application does
+work as expected.
+
+-----------
+PREPARATION
+-----------
+
+Since our GUI application communicates with the back-end database directly, we need a way
+to access the database information from a third-party software.
+
+1. Download the MySQL GUI Tools BUndle from the link below:
+
+   http://dev.mysql.com/downloads/gui-tools/5.0.html.
+
+   This will install MySQL Query Browser, which we use to access data in the database.
+
+2. Assume that you already have the meadowvale database set up during the installation
+   process, you can log into MySQL Query Browser using the following information:
+
+   Server Host: localhost
+   Port: 3306
+   Username: meadowvale
+   Password: jjjjjj (6 j's)
+   Default Schema: meadowvale
+
+3. After successfully logging into MySQL Query Browser, you can meadowvale database at
+   the right panel with all tables populated.
+
+
+-------------------
+Test Log-In Feature
+-------------------
+
+1. Click "Run" to launch the log-in window.
+
+2. There is one default admin username and password for the application in the databse.
+
+   username = veldcl; password: jjjjjj
+
+   You can check this by double clicking mv_user table located in the right panel in MySQL
+   Query Browser.
+
+3. Try the username and password to launch the admin GUI.
+
+4. Try typing any other usernames and passwords and this will prompt the log-in window to
+   display "Invalid User Name/Password".
+
+5. To log in as a student, You can follow the user manual or the screencast to create a
+   student account. Once a student account is created, you can log in to the student GUI.
+
+   The username for the student account is student's entire last name and the first two letters of
+   the first name. For example, if the student is called Michael Jackson,
+   the student's username will be Jacksonmi(all lower-case letters). The default
+   password for student account is "jjjjjj."
+
+
+---------------------------------------------------------------
+Test the feature that displays students' weekly log information
+---------------------------------------------------------------
+
+1. Log in to the application using the student account username and password.
+
+2. At the center of home tab page, you can see a list of weekly log submission status.
+   For example, you will see "Week 1 - Not submitted", which means the weekly log for
+   week 1 is not yet submitted.
+
+3. The submission status should correspond to the corresponding information in the database.
+
+4. To check this, go to MySQL Query Browser and double click mv_weekly_log table.
+
+5. You will see a list of all rows in the mv_weekly_log table. Note that the mv_student_id
+   for g9vance is 1, so only rows with mv_student_id = 1 should be displayed in GUI.
+
+6. The value of week_id stands for the week in which the weekly log should be submitted.
+   If there does not exist an row for a paticular week for a paticular student, this means
+   that the student has not yet submitted the weekly log for that week.
+
+7. You can check using the information above that all submitted weekly logs are correctly
+   displayed on GUI (just Week 2 in the sample database). All weekly logs that do not have
+   corresponding rows in the table are shown as "not submitted" (in the sample database,
+   they are week 1, 3, and 4).
+
+   
+----------------------------------------------------------
+Test the feature that lets student enter their co-op hours
+----------------------------------------------------------
+
+1. Log in to the application using the student account username and password.
+
+2. At the center of home tab page, you can see a list of weekly logs, submitted or not yet
+   submitted.
+
+3. Select any weekly logs from the list and click "View" at the bottom.
+
+4. This will display a "Weekly Log Sheet/Journal" window that lets users enter their co-op
+   hours. If the weekly log selected has already been submitted, the co-op hours submitted
+   should be shown on GUI in the text field. 
+
+5. You can enter a new co-op hours for weekly logs that have not yet been submitted, or
+   modify the co-op hours for weekly logs that have already been submitted, by entering
+   the desired co-op hours at the text field and press "Submit" at the bottom. This will
+   submit the entered hours to the database and close the pop-up window.
+
+6. To check that the information is indeed stored correctly in the database, go to MySQL
+   Query Browser and double click mv_weekly_log table to refresh the table.
+
+7. You can see that if you modify the co-op hours for submitted weekly logs, the coop_hours
+   column of the corresponding row in the table has been updated to the new value. If you
+   enter the co-op hours for weekly logs that have not yet been submitted, you can see in
+   the refreshed mv_weekly_log table that new rows are created for those weekly logs with
+   corrected co-op hours stored.
+
+
+----------------------------------------------------
+Test the feature that lets admin create new accounts
+----------------------------------------------------
+
+1. Log in to the application using the admin account username and password.
+
+2. Select the "Accounts" tab on the left to go into the account management page.
+
+3. You can easily see "Create New Account" the text fields and buttons that follow.
+
+4. You can also see at the bottom a list of names of students using the application
+   and a list of names of admins using the application. They should corresponding to
+   the database.
+
+5. To create a new account, enter the first name, last name, and select the account
+   type you wish to create. Then press "Create new account" button.
+
+6. The message "Student Account Successfully Created" will be displayed on GUI and
+   you can see the name you just entered is shown immediately in the list of names
+   at the bottom of the account management page.
+
+7. To check the user is indeed created in the database, go to MySQL Query Browser
+   and double click mv_user table to refresh the table.
+
+8. You can see new rows are created for each account you just created and the username
+   for each user account is the concatenation of the firstname and the last name with
+   an underscore. The default password for newly created users is "jjjjjj".
+
+9. You can also check to use the newly created usernames and passwords to log in to
+   the application in the log in window. Please note that the student GUI will launch
+   for newly created student accounts and the admin GUI will launch for newly created
+   admin accounts.
+
+
+
+-------------------------------------------------------------------------
+Test the feature that lets admin modify and approve students' co-op hours
+-------------------------------------------------------------------------
+
+1. Log in to the application using the admin account username and password.
+
+2. Select the "Weekly Logs" tab on the left to go into the weekly log management page.
+
+3. First select the desired class and click "View Classes". This will display the names
+   of all students in the class in the second window.
+
+4. Select the desired name in the second window and click "View Students". This will
+   display all weekly logs submitted by this student (both approved and unapproved) in the
+   third window.
+
+5. Select a week in the third window and click "View Logs". This will bring up a similar
+   "Weekly Log Sheet/Journal" for admins to modify and approve co-op hours.
+
+6. To modify hours, simply enter the desired hours in the text field and click "Submit".
+
+7. To test that the hours are updated in the database, go to MySQL Query Browser and
+   double click mv_weekly_log table to refresh the table. You can check that the co-op hours
+   of the corresponding row has been updated.
+
+8. To approve hours, simply click "Approve" at the bottom.
+
+9. To test that the hours are approved in the database, go to MySQL Query Browser and
+   double click mv_weekly_log table to refresh the table. If the approve_id column for an
+   row is null, it means the weekly log this row represents is not approved. The weekly log
+   is approved if the corresponding approve_id column is not null. You can check that the
+   approved_id for the row you just approved is no longer null; approve_id is now the user_id
+   of the admin who approved the co-op hours.
+
+
